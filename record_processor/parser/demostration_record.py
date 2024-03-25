@@ -35,8 +35,20 @@ class DemostrationRecord:
         for index, step in steps.items():
             setattr(self, index, step.__dict__)
 
-    def set_request(self, request):
+    def set_request(self, request: str):
         """
         Set the request.
         """
         self.request = request
+    
+    def get_request(self) -> str:
+        """
+        Get the request.
+        """
+        return self.request
+    
+    def get_applications(self) -> list:
+        """
+        Get the application.
+        """
+        return self.applications

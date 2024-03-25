@@ -1,11 +1,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import argparse
-from .parser.psr_record_parser import PSRRecordParser
-from .utils import save_to_json, unzip_and_read_file
-from ufo.utils import print_with_color
 import os
+import argparse
+from record_processor.summarizer.summarizer import DemostrationSummarizer
+from ufo.config.config import load_config
+from .parser.psr_record_parser import PSRRecordParser
+from .utils import create_folder, save_to_json, unzip_and_read_file
+from ufo.utils import print_with_color
+
+configs = load_config()
 
 args = argparse.ArgumentParser()
 args.add_argument("--request", "-r", help="The request that user want to achieve.",
@@ -18,19 +22,45 @@ parsed_args = args.parse_args()
 def main():
     """
     Main function.
+    1. Read the user demonstration record and parse it.
+    2. Summarize the demonstration record.
+    3. Let user decide whether to save the demonstration record.
+    4. Save the demonstration record if user choose to save.
     """
-
-    # Temporarily hardcode the output file path, will move to a config file later
-    output_file = '{prefix}\\vectordb\\demostration\\log\\{file_name}.json'.format(
-        prefix=os.getcwd(),
-        file_name=parsed_args.request[0].replace(' ', '_')
-    )
     try:
         content = unzip_and_read_file(parsed_args.behavior_record_path)
         record = PSRRecordParser(content).parse_to_record()
         record.set_request(parsed_args.request[0])
-        save_to_json(record.__dict__, output_file)
-        print_with_color(
-            f"Record process successfully. The record is saved to {output_file}.", "green")
+
+        summarizer = DemostrationSummarizer(
+            configs["ACTION_AGENT"]["VISUAL_MODE"], configs["DEMOSTRATION_PROMPT"], configs["ACTION_SELECTION_EXAMPLE_PROMPT"], configs["API_PROMPT"])
+
+        summaries, total_cost = summarizer.get_summary_list([record])
+        if asker(summaries):
+            demostration_path = configs["DEMOSTRATION_SAVED_PATH"]
+            create_folder(demostration_path)
+
+            save_to_json(record.__dict__, os.path.join(demostration_path, "demostration_log", parsed_args.request[0].replace(' ', '_')))
+            summarizer.create_or_update_yaml(summaries, os.path.join(demostration_path, "demostration.yaml"))
+            summarizer.create_or_update_vector_db(summaries, os.path.join(demostration_path, "demostration_db"))
+
+        formatted_cost = '${:.2f}'.format(total_cost)
+        print_with_color(f"Request total cost is {formatted_cost}", "yellow")
+
     except ValueError as e:
         print_with_color(str(e), "red")
+
+
+def asker(summaries) -> bool:
+    plan = summaries[0]["example"]["Plan"]
+    print_with_color("""Here's the plan summarized from your demonstration: """, "cyan")
+    print_with_color(plan, "green")
+    print_with_color("""Would you like to save the plan future reference by the agent?
+[Y] for yes, any other key for no.""", "cyan")
+
+    response = input()
+
+    if response.upper() == "Y":
+        return True
+    else:
+        return False

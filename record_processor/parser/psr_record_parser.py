@@ -4,12 +4,12 @@
 import re
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
-from .demostration_record import DemostrationStep, DemostrationStep
+from .demostration_record import DemostrationStep, DemostrationRecord
 
 
 class PSRRecordParser:
     """
-    Class for parsing the steps recorder .mht file content to user behavior record.
+    Class for parsing the steps recorder .mht file content to user demostration record.
     """
 
     def __init__(self, content: str):
@@ -22,7 +22,7 @@ class PSRRecordParser:
         self.comments = []
         self.steps = []
 
-    def parse_to_record(self) -> DemostrationStep:
+    def parse_to_record(self) -> DemostrationRecord:
         """
         Parse the steps recorder .mht file content to record in following steps:
         1. Find the boundary in the .mht file.
@@ -37,7 +37,7 @@ class PSRRecordParser:
         self.comments = self.get_comments(
             self.parts_dict['main.htm']['Content'])
         self.steps = self.get_steps(self.parts_dict['main.htm']['Content'])
-        record = DemostrationStep(
+        record = DemostrationRecord(
             list(set(self.applications)), len(self.steps), **self.steps)
 
         return record
