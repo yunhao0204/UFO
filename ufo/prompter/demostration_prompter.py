@@ -1,14 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from record_processor.parser.behavior_record import BehaviorRecord
+from record_processor.parser.demostration_record import DemostrationRecord
 from .basic import BasicPrompter
 import json
 
 
-class BehaviorRecordPrompter(BasicPrompter):
+class DemostrationPrompter(BasicPrompter):
     """
-    The BehaviorRecordPrompter class is the prompter for the user behavior record learning.
+    The DemostrationPrompter class is the prompter for the user behavior record learning.
     """
 
     def __init__(self, is_visual: bool, prompt_template: str, example_prompt_template: str, api_prompt_template: str):
@@ -34,7 +34,6 @@ class BehaviorRecordPrompter(BasicPrompter):
         return self.prompt_template["system"].format(apis=apis, examples=examples)
     
 
-
     def user_prompt_construction(self, user_request: str) -> str:
         """
         Construct the prompt for action selection.
@@ -47,7 +46,7 @@ class BehaviorRecordPrompter(BasicPrompter):
     
 
 
-    def user_content_construction(self, behavior_record: BehaviorRecord) -> list[dict]:
+    def user_content_construction(self, demo_record: DemostrationRecord) -> list[dict]:
         """
         Construct the prompt for LLMs.
         :param log_partition: The log partition.
@@ -58,43 +57,44 @@ class BehaviorRecordPrompter(BasicPrompter):
         user_content = []
         
         # Get the total steps of the log partition.
-        step_num = behavior_record.step_num
-        
-        task_start = False
-        
-        for step in range(step_num):
-            step_log = log_partition["step_{num}".format(num=step)]
+        step_num = demo_record.step_num
 
-            # If it is the first action, add the initial screenshot and start the task.
-            if step_log["is_first_action"]:
-                task_start = True
-                if self.is_visual:
-                    user_content.append({
-                    "type": "text",
-                    "text": "[Initial Application Screenshot]:"
-                    })
-                    user_content.append({
-                        "type": "image_url",
-                        "image_url": {
-                            "url": step_log["screenshot"]["raw"]
-                        }
-                    })
-                user_content.append({
-                    "type": "text",
-                    "text": "[Agent Trajectory]:"
-                    })
-                
-            # Add the response of the step.
-            if task_start:
-                user_content.append({
-                "type": "text",
-                "text": json.dumps(step_log["response"])
-                })
+        if self.is_visual:
+            user_content.append({
+            "type": "text",
+            "text": "[Initial Application Screenshot]:"
+            })
+            user_content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": demo_record["step_0"]["screenshot"]
+                }
+            })
+
+        user_content.append({
+            "type": "text",
+            "text": "[Agent Trajectory]:"
+            })
+        
+        for num in range(step_num):
+            step = demo_record["step_{num}".format(num=num)]
+            step_content = {
+                "application": step["application"],
+                "description": step["description"],
+                "action": step["action"],
+            }
+            if step["comment"]:
+                step_content["comment"] = step["comment"]
+
+            user_content.append({
+            "type": "text",
+            "text": json.dumps(step_content)
+            })
                 
         # Add the user request.
         user_content.append({
             "type": "text",
-            "text": self.user_prompt_construction(log_partition.get("request"))
+            "text": self.user_prompt_construction(demo_record.get("request"))
         })
 
         return user_content

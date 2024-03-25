@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+from record_processor.parser.demostration_record import DemostrationRecord
+from ufo.prompter.demostration_prompter import DemostrationPrompter
 from .parser import ExperienceLogLoader
 from ..prompter.experience_prompter import ExperiencePrompter
 from ..llm.llm_call import get_completion
@@ -13,9 +15,9 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 
-class ExperienceSummarizer:
+class DemostrationSummarizer:
     """
-    The ExperienceSummarizer class is the summarizer for the experience learning.
+    The DemostrationSummarizer class is the summarizer for the demostration learning.
     """
 
     def __init__(self, is_visual: bool, prompt_template: str, example_prompt_template: str, api_prompt_template: str):
@@ -32,18 +34,18 @@ class ExperienceSummarizer:
         self.api_prompt_template = api_prompt_template
     
     
-    def build_prompt(self, log_partition: dict) -> list:
+    def build_prompt(self, demostration_record: DemostrationRecord) -> list:
         """
         Build the prompt.
         :param logs: The logs.
         :param user_request: The user request.
         """
-        experience_prompter = ExperiencePrompter(self.is_visual, self.prompt_template, self.example_prompt_template, self.api_prompt_template)
-        experience_system_prompt = experience_prompter.system_prompt_construction()
-        experience_user_prompt = experience_prompter.user_content_construction(log_partition)
-        experience_prompt = experience_prompter.prompt_construction(experience_system_prompt, experience_user_prompt)
+        demostration_prompter = DemostrationPrompter(self.is_visual, self.prompt_template, self.example_prompt_template, self.api_prompt_template)
+        demostration_system_prompt = demostration_prompter.system_prompt_construction()
+        demostration_user_prompt = demostration_prompter.user_content_construction(demostration_record)
+        demostration_prompt = demostration_prompter.prompt_construction(demostration_system_prompt, demostration_user_prompt)
         
-        return experience_prompt
+        return demostration_prompt
     
 
     def get_summary(self, prompt_message: list) -> Tuple[dict, float]:

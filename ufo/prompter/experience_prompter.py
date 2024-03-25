@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import os
+from record_processor.utils import save_to_json
 from .basic import BasicPrompter
 import json
 
@@ -94,6 +96,12 @@ class ExperiencePrompter(BasicPrompter):
             "type": "text",
             "text": self.user_prompt_construction(log_partition.get("request"))
         })
+
+        output_file = '{prefix}\\vectordb\\records\\log\\{file_name}.json'.format(
+            prefix=os.getcwd(),
+            file_name="123"
+        )
+        save_to_json(user_content, output_file)
 
         return user_content
     

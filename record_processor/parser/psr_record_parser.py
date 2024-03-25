@@ -4,7 +4,7 @@
 import re
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
-from .behavior_record import BehaviorRecord, BehaviorStep
+from .demostration_record import DemostrationStep, DemostrationStep
 
 
 class PSRRecordParser:
@@ -22,7 +22,7 @@ class PSRRecordParser:
         self.comments = []
         self.steps = []
 
-    def parse_to_record(self) -> BehaviorRecord:
+    def parse_to_record(self) -> DemostrationStep:
         """
         Parse the steps recorder .mht file content to record in following steps:
         1. Find the boundary in the .mht file.
@@ -37,7 +37,7 @@ class PSRRecordParser:
         self.comments = self.get_comments(
             self.parts_dict['main.htm']['Content'])
         self.steps = self.get_steps(self.parts_dict['main.htm']['Content'])
-        record = BehaviorRecord(
+        record = DemostrationStep(
             list(set(self.applications)), len(self.steps), **self.steps)
 
         return record
@@ -127,7 +127,7 @@ class PSRRecordParser:
                 screenshot = self.get_screenshot(screenshot_file_name)
                 step_key = f"step_{int(action_number) - 1}"
 
-                step = BehaviorStep(
+                step = DemostrationStep(
                     application, description, action, screenshot, self.comments.get(step_key))
                 steps[step_key] = step
                 self.applications.append(application)

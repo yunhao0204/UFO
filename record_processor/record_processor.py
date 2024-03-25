@@ -21,7 +21,7 @@ def main():
     """
 
     # Temporarily hardcode the output file path, will move to a config file later
-    output_file = '{prefix}\\vectordb\\records\\log\\{file_name}.json'.format(
+    output_file = '{prefix}\\vectordb\\demostration\\log\\{file_name}.json'.format(
         prefix=os.getcwd(),
         file_name=parsed_args.request[0].replace(' ', '_')
     )
